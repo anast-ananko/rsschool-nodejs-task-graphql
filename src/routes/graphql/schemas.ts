@@ -36,10 +36,10 @@ export const createGqlResponseSchema = {
 export const MemberTypeId = new GraphQLEnumType({
   name: "MemberTypeId",
   values: {
-    BASIC: { 
+    basic: { 
       value: "basic"
     },
-    BUSINESS: {
+    business: {
       value: "business"
     },
   }
@@ -62,6 +62,16 @@ const ProfileType = new GraphQLObjectType({
     yearOfBirth: { type: GraphQLInt },
     userId: { type: UUIDType },
     memberTypeId: { type: MemberTypeId },
+    memberType: {
+      type: MemberType,
+      resolve: async({ memberTypeId } : { memberTypeId: string }) => {
+        return await prisma.memberType.findUnique({
+          where:{
+            id: memberTypeId
+          }
+        })
+      }
+    }
   })
 });
 
@@ -71,6 +81,27 @@ const UserType = new GraphQLObjectType({
     id: { type: UUIDType },
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
+    profile: {
+      type: ProfileType,
+      resolve: async({ id } : { id: string }) => {
+        return await prisma.profile.findUnique({
+          where:{
+            userId: id
+          }
+        })
+      }
+    },
+    posts: {
+      type: new GraphQLList(PostType),
+      resolve: async({ id } : { id: string }) => {
+        return await prisma.post.findMany({
+          where:{
+            authorId: id
+          }
+        });
+      }
+    },
+    
   }),
 });
 
