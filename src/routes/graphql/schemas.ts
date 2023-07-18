@@ -33,6 +33,16 @@ export const createGqlResponseSchema = {
   ),
 };
 
+const PostType = new GraphQLObjectType({
+  name: 'Post',
+  fields: () => ({
+    id: { type: UUIDType },
+    title: { type: GraphQLString },
+    content: { type: GraphQLString },
+    authorId: { type: UUIDType },
+  }),
+});
+
 export const MemberTypeId = new GraphQLEnumType({
   name: "MemberTypeId",
   values: {
@@ -75,7 +85,17 @@ const ProfileType = new GraphQLObjectType({
   })
 });
 
-const UserType = new GraphQLObjectType({
+interface IUserType {
+  id: string;
+  name: string;
+  balance: number;
+  profile: typeof ProfileType;
+  posts: typeof PostType[];
+  userSubscribedTo: IUserType[];
+  subscribedToUser: IUserType[];
+}
+
+const UserType: GraphQLObjectType<IUserType, IUserType> = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
     id: { type: UUIDType },
@@ -101,18 +121,37 @@ const UserType = new GraphQLObjectType({
         });
       }
     },
-    
-  }),
-});
+    userSubscribedTo: {
+      type: new GraphQLList(UserType),
+      resolve: async ({ id }: { id: string }) => {
+        const subscriptions = await prisma.subscribersOnAuthors.findMany({
+          where: {
+            subscriberId: id,
+          },
+          include: {
+            author: true,
+          },
+        });
 
-const PostType = new GraphQLObjectType({
-  name: 'Post',
-  fields: () => ({
-    id: { type: UUIDType },
-    title: { type: GraphQLString },
-    content: { type: GraphQLString },
-    authorId: { type: UUIDType },
-  }),
+        return subscriptions.map((subscription) => subscription.author);
+      },
+    },
+    subscribedToUser: {
+      type: new GraphQLList(UserType),
+      resolve: async ({ id }: { id: string }) => {
+        const subscriptions = await prisma.subscribersOnAuthors.findMany({
+          where: {
+            authorId: id,
+          },
+          include: {
+            subsriber: true, 
+          },
+        });
+
+        return subscriptions.map((subscription) => subscription.subsriber);
+      },
+    }
+  })
 });
 
 const queries = new GraphQLObjectType({
@@ -136,6 +175,25 @@ const queries = new GraphQLObjectType({
       resolve: async () => {  
         return await prisma.user.findMany();
       }   
+    },   
+    userSubscriptions: {
+      type: new GraphQLList(UserType),
+      args: {
+        userId: { type: UUIDType },
+      },
+      resolve: async (root, { id } : { id: string }) => {
+        const result = await prisma.user.findUnique({
+          where: {
+            id: id,
+          },
+          include: {
+            userSubscribedTo: true,
+            subscribedToUser: true,
+          },
+        });
+    
+        return result ? [result] : [];
+      },
     },
     profile: {
       type: ProfileType,
