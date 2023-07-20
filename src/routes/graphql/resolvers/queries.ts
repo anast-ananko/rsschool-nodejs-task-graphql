@@ -1,4 +1,4 @@
-import { GraphQLObjectType, GraphQLList } from 'graphql';
+import { GraphQLObjectType, GraphQLList, GraphQLNonNull } from 'graphql';
 import { PrismaClient } from '@prisma/client';
 
 import { UUIDType } from '../types/uuid.js';
@@ -8,37 +8,37 @@ import { PostType } from '../types/post.js';
 import { MemberType } from '../types/member.js';
 import { MemberTypeId } from '../types/memberTypeId.js';
 
-export const queries = new GraphQLObjectType({
+export const queries = new GraphQLObjectType<unknown, { prisma: PrismaClient }>({
   name: 'RootQueryType',
   fields: {
     user: {
       type: UserType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
-      resolve: async (root, { id } : { id: string }, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args: { id: string }, context) => {
         return await context.prisma.user.findUnique({
           where: {
-            id: id,
+            id: args.id,
           },
         });
       }
     },
     users: {
       type: new GraphQLList(UserType),
-      resolve: async (root, args, context: { prisma: PrismaClient }) => {  
+      resolve: async (root, args, context) => {  
         return await context.prisma.user.findMany();
       }   
     },   
     userSubscriptions: {
       type: new GraphQLList(UserType),
       args: {
-        userId: { type: UUIDType },
+        userId: { type: new GraphQLNonNull(UUIDType) },
       },
-      resolve: async (root, { id } : { id: string }, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args : { id: string }, context) => {
         const result = await context.prisma.user.findUnique({
           where: {
-            id: id,
+            id: args.id,
           },
           include: {
             userSubscribedTo: true,
@@ -52,57 +52,57 @@ export const queries = new GraphQLObjectType({
     profile: {
       type: ProfileType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
-      resolve: async (root, { id } : { id: string }, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args : { id: string }, context) => {
         return await context.prisma.profile.findUnique({
           where: {
-            id: id
+            id: args.id
           },
         });
       },
     },
     profiles: {
       type: new GraphQLList(ProfileType),
-      resolve: async (root, args, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args, context) => {
         return await context.prisma.profile.findMany();
       }
     }, 
     memberType: {
       type: MemberType,
       args: {
-        id: { type: MemberTypeId },
+        id: { type: new GraphQLNonNull(MemberTypeId) },
       },
-      resolve: async (root, { id } : { id: string }, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args : { id: string }, context) => {
         return await context.prisma.memberType.findUnique({
           where: {
-            id: id
+            id: args.id
           }
         });
       },
     },
     memberTypes: {
       type: new GraphQLList(MemberType),
-      resolve: async (root, args, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args, context) => {
         return await context.prisma.memberType.findMany();
       }
     },
     post: {
       type: PostType,
       args: {
-        id: { type: UUIDType },
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
-      resolve: async (root, { id } : { id: string }, context: { prisma: PrismaClient }) => {
+      resolve: async (root, args : { id: string }, context) => {
         return await context.prisma.post.findUnique({
           where: {
-            id: id,
+            id: args.id,
           },
         });
       }
     },
     posts: {
       type: new GraphQLList(PostType),
-      resolve: async (root, args, context: { prisma: PrismaClient }) => {  
+      resolve: async (root, args, context) => {  
         return await context.prisma.post.findMany();
       }   
     },  
