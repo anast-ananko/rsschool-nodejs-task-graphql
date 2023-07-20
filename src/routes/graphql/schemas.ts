@@ -112,6 +112,14 @@ interface IPost {
   authorId: string;
 }
 
+// const SubscribeInputType = new GraphQLInputObjectType({
+//   name: 'SubscribeInput',
+//   fields: () => ({
+//     userId: { type: new GraphQLNonNull(UUIDType) },
+//     authorId: { type: new GraphQLNonNull(UUIDType) },
+//   }),
+// });
+
 const UserType: GraphQLObjectType = new GraphQLObjectType({
   name: 'User',
   fields: () => ({
@@ -167,7 +175,36 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
 
         return subscriptions.map((subscription) => subscription.subsriber);
       },
-    }
+    },
+    // subscribeTo: {
+    //   type: UserType,
+    //   args: {
+    //     input: { type: new GraphQLNonNull(SubscribeInputType) },
+    //   },
+    //   resolve: async (_, { input }: { input: { userId: string; authorId: string } }) => {
+    //     const { userId, authorId } = input;
+    //     await prisma.subscribersOnAuthors.create({ data: { subscriberId: userId, authorId: authorId } });
+
+    //     return prisma.user.findUnique({ where: { id: userId } });
+    //   },
+    // },
+    // unsubscribeFrom: {
+    //   type: UserType,
+    //   args: {
+    //     input: { type: new GraphQLNonNull(SubscribeInputType) },
+    //   },
+    //   resolve: async (_, { input }: { input: { userId: string; authorId: string } }) => {
+    //     const { userId, authorId } = input;
+    //     await prisma.subscribersOnAuthors.delete({ 
+    //       where: { 
+    //         subscriberId_authorId: { 
+    //           subscriberId: userId, authorId: authorId 
+    //         } 
+    //       } 
+    //     });
+    //     return prisma.user.findUnique({ where: { id: userId } });
+    //   },
+    // },
   })
 });
 
@@ -487,6 +524,48 @@ const mutations = new GraphQLObjectType({
           return true; 
         } catch (error) {
           return false; 
+        }
+      },
+    },
+    subscribeTo: {
+      type: UserType,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: {type: new GraphQLNonNull(UUIDType)}
+      },
+      resolve: async (root, { userId, authorId }: { userId: string; authorId: string }) => {
+        await prisma.subscribersOnAuthors.create({ 
+          data: { 
+            subscriberId: userId, 
+            authorId: authorId 
+          } 
+        });
+
+        return await prisma.user.findUnique({ 
+          where: { id: userId } 
+        });
+      },
+    },
+    unsubscribeFrom: {
+      type: GraphQLBoolean,
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (root, { userId, authorId }: { userId: string; authorId: string }) => {
+        try {
+          await prisma.subscribersOnAuthors.delete({ 
+            where: {
+              subscriberId_authorId: { 
+                subscriberId: userId, 
+                authorId: authorId 
+              } 
+            } 
+          });
+
+          return true;
+        } catch (error) {
+          return false;
         }
       },
     },
