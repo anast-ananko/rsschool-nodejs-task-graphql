@@ -10,7 +10,8 @@ import { UUIDType } from '../types/uuid.js';
 import { MemberTypeId } from './memberTypeId.js';
 import { MemberType } from './member.js';
 
-const ProfileType = new GraphQLObjectType({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const ProfileType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
   name: 'Profile',
   fields: () => ({
     id: { type: UUIDType },
@@ -20,7 +21,7 @@ const ProfileType = new GraphQLObjectType({
     memberTypeId: { type: MemberTypeId },
     memberType: {
       type: MemberType,
-      resolve: async({ memberTypeId } : { memberTypeId: string }, args, context: { prisma: PrismaClient }) => {
+      resolve: async({ memberTypeId } : { memberTypeId: string }, args, context) => {
         return await context.prisma.memberType.findUnique({
           where:{
             id: memberTypeId

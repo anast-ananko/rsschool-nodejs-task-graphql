@@ -11,7 +11,8 @@ import { UUIDType } from '../types/uuid.js';
 import { ProfileType } from './profile.js';
 import { PostType } from './post.js';
 
-const UserType: GraphQLObjectType = new GraphQLObjectType({
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const UserType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
   name: 'User',
   fields: () => ({
     id: { type: UUIDType },
@@ -19,7 +20,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     balance: { type: GraphQLFloat },
     profile: {
       type: ProfileType,
-      resolve: async({ id }: { id: string }, args, context: { prisma: PrismaClient }) => {
+      resolve: async({ id }: { id: string }, args, context) => {
         return await context.prisma.profile.findUnique({
           where:{
             userId: id
@@ -29,7 +30,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     },
     posts: {
       type: new GraphQLList(PostType),
-      resolve: async({ id }: { id: string }, args, context: { prisma: PrismaClient }) => {
+      resolve: async({ id }: { id: string }, args, context ) => {
         return await context.prisma.post.findMany({
           where:{
             authorId: id
@@ -39,7 +40,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     },
     userSubscribedTo: {
       type: new GraphQLList(UserType),
-      resolve: async({ id }: { id: string }, args, context: { prisma: PrismaClient }) => {
+      resolve: async({ id }: { id: string }, args, context) => {
         const subscriptions = await context.prisma.subscribersOnAuthors.findMany({
           where: {
             subscriberId: id,
@@ -54,7 +55,7 @@ const UserType: GraphQLObjectType = new GraphQLObjectType({
     },
     subscribedToUser: {
       type: new GraphQLList(UserType),
-      resolve: async ({ id }: { id: string }, args, context: { prisma: PrismaClient }) => {
+      resolve: async ({ id }: { id: string }, args, context) => {
         const subscriptions = await context.prisma.subscribersOnAuthors.findMany({
           where: {
             authorId: id,

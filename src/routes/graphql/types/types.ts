@@ -16,4 +16,4 @@ export {
   profileChangeInput,
   postCreateInput,
   postChangeInput
-}
+};
