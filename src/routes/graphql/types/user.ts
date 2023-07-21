@@ -12,7 +12,7 @@ import { ProfileType } from './profile.js';
 import { PostType } from './post.js';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const UserType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
+const UserType: GraphQLObjectType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
   name: 'User',
   fields: () => ({
     id: { type: UUIDType },
