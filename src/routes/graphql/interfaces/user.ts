@@ -1,12 +1,12 @@
-import { IProfile } from "./profile.js";
-import { IPost } from "./post.js";
+interface ISubscription {
+  subscriberId: string;
+  authorId: string;
+}
 
 export interface IUser {
   id: string;
   name: string;
   balance: number;
-  profile: IProfile;
-  posts: IPost;
-  userSubscribedTo: IUser[];
-  subscribedToUser: IUser[];
+  userSubscribedTo: ISubscription[];
+  subscribedToUser: ISubscription[];
 }

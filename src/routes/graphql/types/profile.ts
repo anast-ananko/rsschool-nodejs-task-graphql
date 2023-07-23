@@ -4,14 +4,14 @@ import {
   GraphQLInt,
   GraphQLInputObjectType
 } from 'graphql';
-import { PrismaClient } from '@prisma/client';
 
 import { UUIDType } from '../types/uuid.js';
 import { MemberTypeId } from './memberTypeId.js';
 import { MemberType } from './member.js';
+import { IContext } from '../interfaces/context.js';
+import { IProfile } from '../interfaces/profile.js';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ProfileType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
+const ProfileType = new GraphQLObjectType<IProfile, IContext>({
   name: 'Profile',
   fields: () => ({
     id: { type: UUIDType },
@@ -21,12 +21,8 @@ const ProfileType = new GraphQLObjectType<any, { prisma: PrismaClient }>({
     memberTypeId: { type: MemberTypeId },
     memberType: {
       type: MemberType,
-      resolve: async({ memberTypeId } : { memberTypeId: string }, args, context) => {
-        return await context.prisma.memberType.findUnique({
-          where:{
-            id: memberTypeId
-          }
-        })
+      resolve: async({ memberTypeId }, args, context) => {
+        return context.loaders.memberLoader.load(memberTypeId);
       }
     }
   })
