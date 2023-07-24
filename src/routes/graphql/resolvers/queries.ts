@@ -21,7 +21,7 @@ import { IProfile } from '../interfaces/profile.js';
 import { IMember } from '../interfaces/member.js';
 import { IPost } from '../interfaces/post.js';
 
-export const queries = new GraphQLObjectType<IUser, IContext>({
+export const queries = new GraphQLObjectType<unknown, IContext>({
   name: 'RootQueryType',
   fields: {
     user: {
