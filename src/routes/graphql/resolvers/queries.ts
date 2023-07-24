@@ -3,6 +3,11 @@ import {
   GraphQLList, 
   GraphQLNonNull 
 } from 'graphql';
+import { 
+  ResolveTree, 
+  parseResolveInfo, 
+  simplifyParsedResolveInfoFragmentWithType 
+} from 'graphql-parse-resolve-info';
 
 import { UUIDType } from '../types/uuid.js';
 import { UserType } from '../types/user.js';
@@ -30,8 +35,29 @@ export const queries = new GraphQLObjectType<IUser, IContext>({
     },
     users: {
       type: new GraphQLList(UserType),
-      resolve: async (root, args, context) => { 
-        return await context.prisma.user.findMany();
+      resolve: async (root, args, context, resolveInfo) => { 
+        const parsedResolveInfo = parseResolveInfo(resolveInfo);
+
+        const { fields } = simplifyParsedResolveInfoFragmentWithType(
+          parsedResolveInfo as ResolveTree,
+          new GraphQLList(UserType)
+        );     
+
+        const isUserSubscribedTo: boolean = 'userSubscribedTo' in fields;
+        const isSubscribedToUser: boolean = 'subscribedToUser' in fields;
+
+        const users = await context.prisma.user.findMany({
+          include: {
+            userSubscribedTo: isUserSubscribedTo,
+            subscribedToUser: isSubscribedToUser, 
+          }     
+        });
+      
+        users.forEach((user) => {
+          context.loaders.userLoader.prime(user.id, user);
+        });
+  
+        return users;
       }   
     },   
     profile: {
